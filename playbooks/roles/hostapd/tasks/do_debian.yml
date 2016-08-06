@@ -1,0 +1,36 @@
+---
+- name: install hostapd
+  apt: name=hostapd state=latest update_cache=no
+
+- name: creating hostapd config
+  template: src=templates/hostapd.conf dest=/etc/hostapd/hostapd.conf
+  notify: restart hostapd
+
+- name: changing default/hostapd to set config
+  lineinfile: dest=/etc/default/hostapd line="DAEMON_CONF=/etc/hostapd/hostapd.conf" backup=no
+  notify: restart hostapd
+
+- name: creating udev scripts directory
+  file: path=/etc/udev/scripts state=directory mode=0755
+  
+- name: add udev wlan add & remove action and script
+  template: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }}
+  with_items:
+    - { src: 'templates/udev-wlan-bridge',  dest: '/etc/udev/scripts/wlan_bridge.sh', mode: '755' }
+    - { src: 'templates/udev-rules-bridge', dest: '/etc/udev/rules.d/80-wlan_bridge.rules', mode: '644' }
+  notify: restart udev
+
+- name: removing {{ wlaniface }} on Raspbian 8 from interfaces
+  replace: dest=/etc/network/interfaces regexp='allow-hotplug {{ wlaniface }}\niface {{ wlaniface }} inet manual\n\s+wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf'
+  when: ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" 
+  notify: stop {{ wlaniface }}
+
+- stat: path=/etc/NetworkManager/NetworkManager.conf
+  register: nmcfg
+
+- name: ensure NetworkManager ignores {{ wlaniface }}
+  ini_file: dest=/etc/NetworkManager/NetworkManager.conf section={{ item.section }} option={{ item.option }} value={{ item.value }}
+  with_items:
+    - { section: keyfile, option: unmanaged-devices, value: '"interface-name:{{ wlaniface }};interface-name:{{ bridge }};"' }
+  when: nmcfg.stat.exists
+  notify: restart network-manager

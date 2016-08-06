@@ -1,0 +1,18 @@
+#! /bin/sh
+
+if [ "$IFACE" != "{{ bridge }}" ]; then
+    exit 0
+fi
+
+# Only run from ifup.
+if [ "$MODE" != start ]; then
+    exit 0
+fi
+
+#Starting hostapd if down
+/etc/init.d/hostapd status || ( /etc/init.d/hostapd restart && sleep 10 )
+
+#this should be done by hostapd, but it does not in case of rt_hostapd
+/sbin/brctl addif {{ bridge }} {{ wlaniface }}
+
+exit 0

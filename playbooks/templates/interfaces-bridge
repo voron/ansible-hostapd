@@ -1,0 +1,10 @@
+auto {{ bridge }}
+iface {{ bridge }} inet static
+        address {{ address }}
+        netmask {{ netmask }}
+        network {{ network }}
+        broadcast {{ broadcast }}
+        bridge_ports none
+        bridge_fd 2
+        bridge_hello 1
+        bridge_stp on

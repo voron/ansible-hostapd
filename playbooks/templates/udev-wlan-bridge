@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+/sbin/brctl delif {{ bridge }} $1 &>/dev/null
+
+/etc/init.d/hostapd restart
+sleep 10
+/sbin/brctl addif {{ bridge }} $1
+#echo add $1 to {{ bridge }} >> /tmp/{{ wlaniface }}.bridge.log
+
+exit 0

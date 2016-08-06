@@ -1,0 +1,15 @@
+[node]
+#deb7-32
+#deb8-32
+#deb7-64
+#deb8-64
+u14-32
+u14-64
+u16-32
+u16-64
+#raspberrypi
+
+[node:vars]
+ansible_connection=ssh
+ansible_ssh_user=root
+ansible_ssh_pass=vorontest

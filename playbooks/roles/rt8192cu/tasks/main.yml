@@ -1,0 +1,7 @@
+---
+
+- include: do_centos.yml
+  when: ansible_distribution == "CentOS" and build_rt8192cu == 'yes'
+
+- include: do_debian.yml
+  when: ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )  and build_rt8192cu == 'yes'

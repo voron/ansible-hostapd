@@ -1,0 +1,20 @@
+---
+- hosts: all
+  vars:
+    bridge: br0
+    wlaniface: wlan0
+    wifinet: mywifi
+    wifipassword: 12345678
+    build_rt8192cu: no
+    net: 192.168.88
+    address: "{{ net }}.1"
+    netmask: 255.255.255.0
+    network: "{{ net }}.0"
+    broadcast: "{{ net }}.255"
+    dhcp_range: "{{ net }}.20,{{ net }}.254"
+  roles:
+    - bridge
+    - hostapd
+    - rt8192cu
+    - dhcpdns
+    - firewall

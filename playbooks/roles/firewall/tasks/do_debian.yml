@@ -1,0 +1,19 @@
+---
+- name: install iptables-persistent
+  apt: name=iptables-persistent state=latest update_cache=no
+
+#- name: adding NAT rule ansible 2.0+
+#  iptables: table=nat chain=POSTROUTING source="{{ net }}.0/24" jump=MASQUERADE
+#  when: ansible_version.major|int >= 2
+#  ignore_errors: True
+
+- name: adding NAT rule ansible <2.0
+  shell: iptables -t nat -N hostapd || iptables -t nat -F hostapd; iptables -t nat -A hostapd -s "{{ net | quote }}.0/24" -j MASQUERADE; iptables -t nat -D POSTROUTING -j hostapd; iptables -t nat -A POSTROUTING -j hostapd;
+#  when: ansible_version.major|int < 2
+
+- name: enabling persistent rules
+  shell: dpkg-reconfigure -f noninteractive iptables-persistent
+  
+- name: enable packet forwarding
+  sysctl: name=net.ipv4.ip_forward value=1
+  

@@ -1,0 +1,5 @@
+---
+
+- name: restart {{ bridge }}
+  shell: ifdown {{ bridge|quote }}; ifup {{ bridge|quote }}
+  ignore_errors: yes 

@@ -1,0 +1,2 @@
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", KERNEL=="wlan*", RUN+="/etc/udev/scripts/wlan_bridge.sh %k"
+SUBSYSTEM=="net", ACTION=="remove", DRIVERS=="?*", KERNEL=="wlan*", RUN+="/etc/init.d/hostapd stop"

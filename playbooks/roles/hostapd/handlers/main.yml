@@ -1,0 +1,14 @@
+---
+
+- name: stop {{ wlaniface }}
+  service: name=ifup@{{ wlaniface }}.service state=stopped
+
+- name: restart network-manager
+  service: name=network-manager state=restarted
+
+- name: restart udev
+  service: name=udev state=restarted
+
+- name: restart hostapd
+  service: name=hostapd state=restarted enabled=yes
+  

@@ -1,0 +1,9 @@
+---
+- name: installing dnsmasq
+  apt: name=dnsmasq state=latest update_cache=no
+  
+- name: configuring dnsmasq
+  template: src=templates/dnsmasq dest=/etc/dnsmasq.d/dhcp-{{ bridge }}
+  notify:
+   - restart dnsmasq  
+

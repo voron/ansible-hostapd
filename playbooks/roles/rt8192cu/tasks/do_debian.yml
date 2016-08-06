@@ -1,0 +1,66 @@
+---
+- name: realtek hostapd file name
+  set_fact:
+    rthostapd: "wpa_supplicant_hostapd-0.8_rtw_r7475.20130812.tar.gz"
+
+# Raspbian 8 already has 8192cu driver compiled in   
+
+- name: installing linux-headers
+  apt: name="linux-headers-{{ ansible_kernel }}" state=latest update_cache=no
+  when: not ( ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" )
+
+- name: installing git, dkms
+  apt: name={{ item }} state=latest update_cache=no
+  with_items:
+    - git
+    - dkms
+  when: not ( ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" )
+    
+- name: installing make
+  apt: name={{ item }} state=latest update_cache=no
+  with_items:
+    - make
+
+- name: checking kernel module installed 
+  shell: "dkms status -m 8192cu|grep installed"
+  register: dkms_result
+  failed_when: dkms_result.rc !=1 and dkms_result.rc !=0
+  ignore_errors: yes
+  when: not ( ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" )
+  
+  #better to switch to https://github.com/pvaret/rtl8192cu-fixes/ sometimes
+- name: fetching and compiling kernel module, may take some time 
+  shell: "cd /usr/src/ && rm -rf rt8192cu && git clone https://github.com/dz0ny/rt8192cu.git && cd rt8192cu && make dkms"
+  when: (not ( ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" )) and  dkms_result.rc != 0 
+  
+- name: blacklisting rtl8xxxu.
+  lineinfile: dest=/etc/modules.d/blacklist.conf line="blacklist rtl8xxxu" backup=no
+  when: (not ( ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" )) and  dkms_result.rc != 0 
+  
+- name: reloading module
+  shell: "rmmod rtl8xxxu;rmmod rtl8192cu; rmmod rtl8192c_common; rmmod rtl_usb;rmmod rtlwifi; modprobe 8192cu; true"
+  when: not ( ansible_lsb.id == "Raspbian" and ansible_distribution_major_version == "8" )
+
+- name: uploading realtek hostapd
+  copy: src=roles/rt8192cu/files/{{ rthostapd }} dest=/usr/src
+
+- stat: path=/usr/local/sbin/hostapd
+  register: rt_hostapd
+
+- name: compiling && installing realtek hostapd, may take some time
+  shell: "cd /usr/src && tar xzf {{ rthostapd | quote }} && cd wpa_sup*/hostapd/ && make && cp hostapd hostapd_cli /usr/local/sbin/"
+  when: rt_hostapd.stat.exists == False
+  
+- name: replacing hostapd binary in configs, init.d/hostapd used on both Deb 7 & 8
+# spaces are invalid, no_extra_spaces present at ansible 2.1
+#  ini_file: dest=/etc/init.d/hostapd section="" option=DAEMON_SBIN value=/usr/local/sbin/hostapd backup=no
+  lineinfile: dest=/etc/init.d/hostapd regexp="^DAEMON_SBIN=" line="DAEMON_SBIN=/usr/local/sbin/hostapd" backup=no
+#  when: ansible_distribution_major_version == "7"
+
+- name: replacing driver in hostapd.conf
+  lineinfile: dest=/etc/hostapd/hostapd.conf regexp="^driver=" line="driver=rtl871xdrv" backup=no
+  notify:
+  - restart hostapd
+
+- name: creating bridge ifup script to add {{ wlaniface }} to bridge on startup
+  template : src=templates/ifup-bridge dest=/etc/network/if-up.d/{{ bridge }} mode=0755

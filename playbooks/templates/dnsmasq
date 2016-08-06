@@ -1,0 +1,4 @@
+dhcp-range={{ dhcp_range }},{{ netmask }},12h
+dhcp-option=option:router,{{ address }}
+dhcp-option=option:dns-server,{{ address }}
+dhcp-authoritative

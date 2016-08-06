@@ -1,0 +1,9 @@
+---
+- name: installing python and lsb-release
+  raw:  apt-get -y install python lsb-release  
+  
+- name: enabling ssh root login on Debian 8
+  raw:  sed -i"" 's/^PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config; service ssh reload
+
+- name: removing /tmp/ansible
+  raw: rm -rf /tmp/ansible

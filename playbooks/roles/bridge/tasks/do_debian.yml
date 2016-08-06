@@ -1,0 +1,20 @@
+---
+- name: Set custom config path dir
+  set_fact:
+     ccdir:  "/etc/network/interfaces.d"
+
+- name: creating dir to custom configs Debian 7
+  file : path={{ ccdir }} state=directory mode=0755
+  when: ansible_distribution_major_version == "7"
+  
+- name: include custom configs into interfaces Debian 7
+  lineinfile : dest=/etc/network/interfaces line="source {{ ccdir }}/*" backup=no
+  when: ansible_distribution_major_version == "7"
+  notify: restart {{ bridge }}
+  
+- name: creating bridge config
+  template : src=templates/interfaces-bridge dest={{ ccdir }}/{{ bridge }}
+  notify: restart {{ bridge }}
+
+- name: installing bridge-utils
+  apt: name=bridge-utils state=latest update_cache=no

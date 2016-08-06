@@ -1,0 +1,6 @@
+---
+- hosts: all
+  #we need this to bootstrap without python
+  gather_facts: no
+  roles:
+    - bootstrap

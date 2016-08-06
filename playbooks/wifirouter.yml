@@ -1,0 +1,39 @@
+---
+- hosts: all
+  vars_prompt:
+    - name: "bridge"
+      prompt: "Enter bridge interface name. Leave defaul if not sure"
+      default: "br0"
+      private: no
+    - name: "wlaniface"
+      prompt: "Enter WiFi interface name. Leave default if not sure"
+      default: "wlan0"
+      private: no
+    - name: "wifinet"
+      prompt: "Enter WiFi SSID/network name"
+      default: "mywifi"
+      private: no
+    - name: "wifipassword" 
+      prompt: "Enter WiFi password"
+      default: "12345678"
+      private: no
+    - name: "net"
+      prompt: "Enter AP network prefix, 3 octets.  Use free /24 network"
+      default: "192.168.88"
+      private: no
+    - name: "build_rt8192cu"
+      prompt: "Realtek 819x WiFi and Realtek-only hostapd support. Say yes only if sure (yes/no) ?"
+      default: "no"
+      private: no
+  vars:
+    address: "{{ net }}.1"
+    netmask: 255.255.255.0
+    network: "{{ net }}.0"
+    broadcast: "{{ net }}.255"
+    dhcp_range: "{{ net }}.20,{{ net }}.254"
+  roles:
+    - bridge
+    - hostapd
+    - rt8192cu
+    - dhcpdns
+    - firewall
